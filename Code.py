@@ -1,4 +1,5 @@
 # =============== LISTE DES IMPORTATIONS ===============
+import re
 import requests
 import pickle
 import datetime
@@ -29,19 +30,42 @@ def recuperer_contenu_web(url):
     else:
         print("Le contenu n'a pas ete recupere.")
         exit()
-
     return contenu_web
 
-def extraire_texte_pertinent(contenu_web, termes_recherche):
-    soup = BeautifulSoup(contenu_web, 'html.parser', from_encoding='utf-8')
+def nettoyer_texte(texte):
+    # Supprimer les balises HTML
+    cleaned_text = re.sub(r'<.*?>', '', texte)
+    
+    cleaned_text = cleaned_text.lower()
+    cleaned_text = cleaned_text.replace('\n', ' ')
 
+    # Supprimer les caractères spéciaux et les chiffres
+    cleaned_text = re.sub(r'[^a-zA-Z\s]', '', cleaned_text)
+    
+    # Supprimer les espaces multiples
+    cleaned_text = ' '.join(cleaned_text.split())
+    return cleaned_text.strip()
+
+# =============== TRIER LES RESULTATS PAR PERTINENCE ===============
+def extraire_texte_pertinent(contenu_web, termes_recherche):
     texte_pertinent = []
+
+    contenu_web = contenu_web.lower()  # Normaliser le texte en minuscules
+
     for terme in termes_recherche:
-        elements = soup.find_all(lambda tag: tag.name and terme in tag.get_text().lower())
-        for element in elements:
-            texte_pertinent.append(element.get_text().strip())
+        indice = contenu_web.find(terme)
+        while indice != -1:
+            debut = max(0, indice - 100)
+            fin = min(len(contenu_web), indice + 100 + len(terme))
+            texte = nettoyer_texte(contenu_web[debut:fin])
+            if texte and texte not in texte_pertinent:
+                texte_pertinent.append(texte)
+            indice = contenu_web.find(terme, indice + 1)
 
     return texte_pertinent
+
+
+
 
 def traiter_texte_pertinent(texte_pertinent):
     print(f"# docs avec doublons : {len(texte_pertinent)}")
@@ -52,9 +76,7 @@ def traiter_texte_pertinent(texte_pertinent):
         print(f"Document {i}\t# caracteres : {len(doc)}\t# mots : {len(doc.split(' '))}\t# phrases : {len(doc.split('.'))}")
         if len(doc) < 100:
             texte_pertinent.remove(doc)
-
     longue_chaine_de_caracteres = " ".join(texte_pertinent)
-
     return longue_chaine_de_caracteres
 
 # =============== CREER DOCUMENT ET AUTEUR =============
@@ -70,11 +92,15 @@ def creer_document(collection, url, longue_chaine_de_caracteres):
     collection.append(doc_classe)
 
 def creer_auteur(collection, aut2id, num_auteurs_vus, doc):
+
+    auteurs = {}
+    aut2id = {}
+    num_auteurs_vus = 0
+
     if doc.auteur not in aut2id:
         num_auteurs_vus += 1
         auteurs[num_auteurs_vus] = Author(doc.auteur)
         aut2id[doc.auteur] = num_auteurs_vus
-
     auteurs[aut2id[doc.auteur]].add(doc.texte)
 
 # =============== CREATION ET SAUVEGARDE DU CORPUS ===============
@@ -110,7 +136,6 @@ def obtenir_matrice_tfidf(corpus):
     # Utiliser TfidfVectorizer pour obtenir la matrice TF-IDF
     vectoriseur = TfidfVectorizer()
     matrice_tfidf = vectoriseur.fit_transform(textes)
-
     return matrice_tfidf, vectoriseur.get_feature_names_out()
 
 # =============== OBTENIR MATRICE DE FREQUENCE DES MOTS ===============
@@ -126,8 +151,8 @@ def frequence_mots(corpus):
     # Utiliser CountVectorizer pour obtenir la matrice de fréquence des mots
     vectoriseur = CountVectorizer()
     matrice_frequence_mots = vectoriseur.fit_transform(textes)
-
     return matrice_frequence_mots, vectoriseur.get_feature_names_out()
+
 
 # =============== APPELS DES FONCTIONS ===============
 # URL de la page web
@@ -138,8 +163,12 @@ contenu_web = recuperer_contenu_web(url_test)
 
 # extraire le texte pertinent
 termes_recherche = ["jeux", "olympique"]
+contenu_web = "Les jeux olympiques rassemblent des athletes du monde entier dans un esprit de competition saine et de fraternite. Chaque edition des jeux offre une opportunite unique de celebrer le jeu, l'esprit olympique et la diversite des disciplines sportives. Les athletes s'engagent a atteindre l'excellence dans leurs jeux respectifs, contribuant ainsi a l'heritage durable des jeux olympiques."
 texte_pertinent = extraire_texte_pertinent(contenu_web, termes_recherche)
+# Affichage des résultats
+print("Texte pertinent sans duplication:", texte_pertinent)
 
+'''
 # traiter le texte pertinent extrait
 longue_chaine_de_caracteres = traiter_texte_pertinent(texte_pertinent)
 
@@ -171,5 +200,4 @@ matrice_frequence_mots, noms_mots = frequence_mots(corpus_sauvegarde_charge)
 # Créer un DataFrame pour afficher la matrice de fréquence des mots
 df_frequence_mots = pd.DataFrame(matrice_frequence_mots.toarray(), columns=noms_mots)
 print(df_frequence_mots)
-
-
+'''
