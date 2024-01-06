@@ -33,18 +33,27 @@ def recuperer_contenu_web(url):
     return contenu_web
 
 def nettoyer_texte(texte):
-    # Supprimer les balises HTML
-    cleaned_text = re.sub(r'<.*?>', '', texte)
-    
-    cleaned_text = cleaned_text.lower()
-    cleaned_text = cleaned_text.replace('\n', ' ')
+    # Retirer les balises HTML
+    texte_sans_html = BeautifulSoup(texte, 'html.parser').get_text()
 
-    # Supprimer les caractères spéciaux et les chiffres
-    cleaned_text = re.sub(r'[^a-zA-Z\s]', '', cleaned_text)
-    
-    # Supprimer les espaces multiples
-    cleaned_text = ' '.join(cleaned_text.split())
-    return cleaned_text.strip()
+    # Diviser le texte en mots en utilisant plusieurs délimitations
+    mots = re.split(r'\s+|[.,;\'"()]+', texte_sans_html)
+
+    # Ajouter les mots à l'ensemble
+    vocabulaire_set = set(mots)
+
+    # Construire un dictionnaire de vocabulaire avec des fréquences initiales à zéro
+    vocabulaire = {mot: 0 for mot in vocabulaire_set}
+    '''
+    # Mettre à jour les fréquences en parcourant à nouveau les documents
+    mots = re.split(r'\s+|[.,;\'"()]+', texte_sans_html)'''
+
+    for mot in mots:
+        vocabulaire[mot] += 1
+    return set(vocabulaire)
+
+
+
 
 # =============== TRIER LES RESULTATS PAR PERTINENCE ===============
 def extraire_texte_pertinent(contenu_web, termes_recherche):
@@ -63,9 +72,6 @@ def extraire_texte_pertinent(contenu_web, termes_recherche):
             indice = contenu_web.find(terme, indice + 1)
 
     return texte_pertinent
-
-
-
 
 def traiter_texte_pertinent(texte_pertinent):
     print(f"# docs avec doublons : {len(texte_pertinent)}")
@@ -153,7 +159,7 @@ def frequence_mots(corpus):
     matrice_frequence_mots = vectoriseur.fit_transform(textes)
     return matrice_frequence_mots, vectoriseur.get_feature_names_out()
 
-
+'''
 # =============== APPELS DES FONCTIONS ===============
 # URL de la page web
 url_test = 'https://www.paris2024.org/fr/'
@@ -161,14 +167,20 @@ url_test = 'https://www.paris2024.org/fr/'
 #récupérer le contenu web
 contenu_web = recuperer_contenu_web(url_test)
 
+#nettoyer le texte
+resultat_nettoye = nettoyer_texte(contenu_web)
+
+# Afficher le résultat
+print(resultat_nettoye)
+
 # extraire le texte pertinent
 termes_recherche = ["jeux", "olympique"]
-contenu_web = "Les jeux olympiques rassemblent des athletes du monde entier dans un esprit de competition saine et de fraternite. Chaque edition des jeux offre une opportunite unique de celebrer le jeu, l'esprit olympique et la diversite des disciplines sportives. Les athletes s'engagent a atteindre l'excellence dans leurs jeux respectifs, contribuant ainsi a l'heritage durable des jeux olympiques."
+#contenu_web = "Les jeux olympiques rassemblent des athletes du monde entier dans un esprit de competition saine et de fraternite. Chaque edition des jeux offre une opportunite unique de celebrer le jeu, l'esprit olympique et la diversite des disciplines sportives. Les athletes s'engagent a atteindre l'excellence dans leurs jeux respectifs, contribuant ainsi a l'heritage durable des jeux olympiques."
 texte_pertinent = extraire_texte_pertinent(contenu_web, termes_recherche)
 # Affichage des résultats
 print("Texte pertinent sans duplication:", texte_pertinent)
 
-'''
+
 # traiter le texte pertinent extrait
 longue_chaine_de_caracteres = traiter_texte_pertinent(texte_pertinent)
 
@@ -201,3 +213,4 @@ matrice_frequence_mots, noms_mots = frequence_mots(corpus_sauvegarde_charge)
 df_frequence_mots = pd.DataFrame(matrice_frequence_mots.toarray(), columns=noms_mots)
 print(df_frequence_mots)
 '''
+
