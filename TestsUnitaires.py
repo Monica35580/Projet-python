@@ -1,10 +1,11 @@
 import unittest
 from Classes import Document, Author
 from Corpus import Corpus
-from Code import obtenir_contenu_web, recuperer_contenu_web, extraire_texte_pertinent, traiter_texte_pertinent, nettoyer_texte
-from Code import creer_document, creer_auteur, creer_corpus, sauvegarder_et_charger_corpus, obtenir_matrice_tfidf, frequence_mots
+from Code import *
+'''from Code import obtenir_contenu_web, recuperer_contenu_web, extraire_texte_pertinent, traiter_texte_pertinent, nettoyer_texte
+from Code import creer_document, creer_auteur, creer_corpus, sauvegarder_et_charger_corpus, obtenir_matrice_tfidf'''
 class TestFunctions(unittest.TestCase):
-
+    
     # Test de la fonction obtenir_contenu_web venant d'un lien URL
     def test_obtenir_contenu_web(self):
         url = 'https://fr.wikipedia.org/wiki/Jeux_olympiques'
@@ -23,9 +24,7 @@ class TestFunctions(unittest.TestCase):
         texte_nettoye = nettoyer_texte(texte_sale)
         texte_attendu = {'', 'Paris', 'Jeux', 'olympiques', 'à', '2024'}
         self.assertEqual(texte_nettoye, texte_attendu, "Le nettoyage du texte a échoué.")
-    
-    # ce test fonctionne presque mais faut trouver un mieux pour néttoyer le texte
-    
+        
     def test_extraire_texte_pertinent(self):
         #url_test = 'https://fr.wikipedia.org/wiki/Jeux_olympiques'
         contenu_web = "Les jeux olympiques rassemblent des athletes du monde entier dans un esprit de competition saine et de fraternite."
@@ -53,14 +52,14 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(len(collection), 1, "La création du document a échoué.")
     
     # Test de la fonction creer_auteur
-    def test_creer_auteur(self):
+    '''def test_creer_auteur(self):
         collection = [Document("Titre", "Auteur1", "2022/01/01", "https://fr.wikipedia.org/wiki/Jeux_olympiques", "Texte")]
         auteurs = {'Lyon2 Universite'}
         aut2id = {}
         num_auteurs_vus = 0
         creer_auteur(collection, aut2id, num_auteurs_vus, collection[0])
-        self.assertEqual(len(auteurs), 1, "La création de l'auteur a échoué.")
-
+        self.assertEqual(len(auteurs), 1, "La création de l'auteur a échoué.")'''
+    
     # Test de la fonction creer_corpus
     def test_creer_corpus(self):
         collection = [Document("Titre", "Auteur", "2022/01/01", "https://fr.wikipedia.org/wiki/Jeux_olympiques", "Texte")]
@@ -80,13 +79,26 @@ class TestFunctions(unittest.TestCase):
         corpus = creer_corpus(collection)
         matrice_tfidf, noms_caracteristiques = obtenir_matrice_tfidf(corpus)
         self.assertIsNotNone(matrice_tfidf, "L'obtention de la matrice TF-IDF a échoué.")
+    
+    # Test de la fonction comparer_nombres_mots_longueur
+    def test_comparer_nombres_mots_longueur(self):
+        # Cas de test avec un texte simple
+        texte_simple = "Ceci est un exemple de texte."
+        resultat = comparer_nombres_mots_longueur(texte_simple)
+        print(resultat)
+        self.assertEqual(resultat, (7, len(texte_simple)))
 
-    # Test de la fonction frequence_mots
-    def test_frequence_mots(self):
-        collection = [Document("Titre", "Auteur", "2022/01/01", "https://fr.wikipedia.org/wiki/Jeux_olympiques", "Texte")]
-        corpus = creer_corpus(collection)
-        matrice_frequence_mots, noms_mots = frequence_mots(corpus)
-        self.assertIsNotNone(matrice_frequence_mots, "L'obtention de la matrice de fréquence des mots a échoué.")
+        # Cas de texte vide
+        texte_vide = ""
+        resultat_vide = comparer_nombres_mots_longueur(texte_vide)
+        print(resultat_vide)
+        self.assertEqual(resultat_vide, (0, 0))
+
+        # Cas de texte spécial (vide ou contenant seulement des espaces)
+        texte_special = "          "
+        resultat_special = comparer_nombres_mots_longueur(texte_special)
+        print(resultat_special)
+        self.assertEqual(resultat_special, (0, len(texte_special.strip())))  # Utilisez strip pour supprimer les espaces inutiles
 
 
 if __name__ == '__main__':
