@@ -1,7 +1,7 @@
 import unittest
 from Classes import Document, Author
 from Corpus import Corpus
-from Code import *
+from CodeBis import *
 '''from Code import obtenir_contenu_web, recuperer_contenu_web, extraire_texte_pertinent, traiter_texte_pertinent, nettoyer_texte
 from Code import creer_document, creer_auteur, creer_corpus, sauvegarder_et_charger_corpus, obtenir_matrice_tfidf'''
 class TestFunctions(unittest.TestCase):
