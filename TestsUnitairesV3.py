@@ -76,20 +76,6 @@ class TestFunctions(unittest.TestCase):
         # Vérifier si la liste contient un document
         self.assertTrue(len(collection_document) > 0, "La liste de documents devrait contenir au moins un document.")
     
-    '''# Test de la fonction creer_auteur
-    def test_creer_auteur(self):
-        # Initialiser les données de test
-        collection = [Document("Titre", "Auteur1", "2022/01/01", "https://fr.wikipedia.org/wiki/Jeux_olympiques", "Texte")]
-        aut2id = {}
-        num_auteurs_vus = 0
-
-        auteurs_crees, aut2id, num_auteurs_vus = creer_auteur(collection, aut2id, num_auteurs_vus, collection[0])
-
-        # Vérifier les résultats
-        self.assertEqual(len(auteurs_crees), 1, "La création de l'auteur a échoué.")
-        self.assertEqual(len(aut2id), 1, "Le mapping aut2id est incorrect.")
-        self.assertEqual(num_auteurs_vus, 1, "Le nombre d'auteurs vus est incorrect.")'''
-
     # Test de la fonction creer_corpus
     def test_creer_corpus(self):
         collection = [Document("Titre", "Auteur", "2022/01/01", "https://fr.wikipedia.org/wiki/Jeux_olympiques", "Texte")]
@@ -137,25 +123,60 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(resultat_non_vide, (mots_manuels, longueur_manuelle),
                          "Les résultats ne correspondent pas aux calculs manuels.")
 
-    '''La fonction test ne marche pas''' 
-    # Test de la fonction test_trier_resultats_par_similarite
-    def test_trier_resultats_par_similarite(self):
-        # Créer des données de test
-        vectoriseur = TfidfVectorizer(min_df=1)
-        matrice_tfidf = vectoriseur.fit_transform(["Document1", "Document2", "Document3"])
-        termes_recherche = ["olympic", "texte", "valeur"]
-        collection_documents = ["Document 1", "Document 2", "Document 3"]
+    # Test de la fonction compter_phrases
+    def test_compter_phrases(self):
+        texte_1 = "C'est une phrase. Et voici une autre phrase!"
+        texte_2 = "Une seule phrase ici."
+        texte_3 = "Pas de mal du tout. C'est la dernière fois !! Attention a toi."
+        
+        self.assertEqual(compter_phrases(texte_1), 2)
+        self.assertEqual(compter_phrases(texte_2), 1)
+        self.assertEqual(compter_phrases(texte_3), 3)
 
-        # Appeler la fonction avec les mêmes paramètres
-        resultats_tries = trier_resultats_par_similarite(matrice_tfidf, termes_recherche, vectoriseur, collection_documents)
+    # Test de la fonction compter_mots
+    def test_compter_mots(self):
+        texte_1 = "Ceci est un exemple de phrase."
+        texte_2 = "Python est un langage de programmation puissant."
+        texte_3 = "   Il   est  présent   plusieurs    espaces."
+        
+        self.assertEqual(compter_mots(texte_1), 6)
+        self.assertEqual(compter_mots(texte_2), 7)
+        self.assertEqual(compter_mots(texte_3), 5)
 
-        # Vérifier les résultats
-        self.assertEqual(len(resultats_tries), len(collection_documents))
+    # Test de la fonction compter_caracteres
+    def test_compter_caracteres(self):
+        texte_1 = "Ceci est une phrase."
+        texte_2 = "Python est un langage de programmation."
+        texte_3 = "   Il   y a   des    espaces   supplémentaires.   "
+        
+        self.assertEqual(compter_caracteres(texte_1), 20) 
+        self.assertEqual(compter_caracteres(texte_2), 39)
+        self.assertEqual(compter_caracteres(texte_3), 50)  
 
-        # Afficher les résultats triés
-        for document, similarite in resultats_tries:
-            print(f"Similarite : {similarite[0]:.4f}")
-            print(document)
+
+    # Test de la fonction  creation_df
+    def test_creation_df(self):
+        contenu = ["Texte 1.", "Texte 2.", "Texte 3."]
+        auteurs = ["Auteur 1", "Auteur 2", "Auteur 3"]
+        dates = ["2022-01-01", "2022-01-02", "2022-01-03"]
+        nom_var = "Origine_1"
+
+        df = creation_df(contenu, auteurs, dates, nom_var)
+
+        # Vérifier si le DataFrame est créé correctement
+        self.assertIsInstance(df, pd.DataFrame)
+
+        # Vérifier si les colonnes sont présentes dans le DataFrame
+        self.assertTrue('Contenu' in df.columns)
+        self.assertTrue('Auteur' in df.columns)
+        self.assertTrue('Date' in df.columns)
+        self.assertTrue('Origine' in df.columns)
+
+        # Vérifier si les données sont correctement insérées
+        self.assertEqual(df.shape[0], len(contenu))
+        self.assertEqual(df['Auteur'].tolist(), auteurs)
+        self.assertEqual(df['Date'].tolist(), dates)
+        self.assertEqual(df['Origine'].unique(), [nom_var])
 
 
 if __name__ == '__main__':

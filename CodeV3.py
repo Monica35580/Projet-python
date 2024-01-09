@@ -121,10 +121,12 @@ def recuperer_contenu_web():
     
 # =============== TRAITEMENT DU CORPUS ===============
 def nettoyer_texte(texte):
-    # Supprimer les caractères spéciaux et les chiffres
-    texte_sans_html = re.sub(r'[^a-zA-Z\s.]+', '', texte)    
+    # Supprimer les caractères spéciaux
+    texte_sans_html = re.sub(r'[^a-zA-Z\s.]+', '', texte) 
+    # Passage du texte en minuscule   
     texte_propre = texte_sans_html.lower()
-    texte_propre = texte_propre.replace('\n', ' ')
+    # Remplacement des sauts de lignes par du vide
+    texte_propre = texte_propre.replace('\n', ' ')    
     return texte_propre
 
 # =============== FORMAT DATE ===============
@@ -230,7 +232,7 @@ def obtenir_matrice_tfidf(textes):
         textes = [textes]
 
     # Utiliser TfidfVectorizer avec un seuil minimum de documents
-    vectoriseur = TfidfVectorizer(min_df=1)  # Réglez min_df en fonction de vos besoins
+    vectoriseur = TfidfVectorizer(min_df=1)  
     matrice_tfidf = vectoriseur.fit_transform(textes)
     return matrice_tfidf
 
@@ -257,7 +259,7 @@ def compter_phrases(texte):
     # Filtrer les éléments vides
     phrases = [phrase for phrase in phrases if phrase] 
     # Retour de la longueur de la phrase
-    return len(phrases)
+    return len(phrases) 
 
 # =============== CALCUL NOMBRE DE MOT PAR TEXTE ===============
 def compter_mots(texte):
@@ -327,3 +329,8 @@ df.to_csv('corpus.csv', index=False, sep=';')
 
 # Inititalisation des documents du corpus
 corpus_liste=creer_document()
+
+# Pour obtenir le corpus en df sans interroger l'API
+chemin_fichier_csv = 'corpus.csv' # A changer si ça fonctionne pas  |   le mieux est de tout mettre dans un seul et même dossier
+df = pd.read_csv(chemin_fichier_csv, delimiter=';')
+print(df)
