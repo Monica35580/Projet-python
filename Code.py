@@ -1,17 +1,17 @@
 # =============== LISTE DES IMPORTATIONS ===============
-import re
-import requests
-import pickle
-import praw
 import datetime
 import pandas as pd
+import pickle
+import praw
+import re
+import requests
 import urllib, urllib.request
 import xmltodict
 from bs4 import BeautifulSoup
 from Classes import Document, Author
 from Corpus import Corpus
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-
+from sklearn.metrics.pairwise import cosine_similarity
 
 # =============== RECUPERER CONTENU ET TRAITEMENT DU DOCUMENT ===============
 def obtenir_contenu_web():
@@ -58,45 +58,10 @@ def recuperer_contenu_web():
     return docs, docs_bruts
 
 def nettoyer_texte(texte):
-    # Retirer les balises HTML
-    #texte_sans_html = BeautifulSoup(texte, 'html.parser').get_text()
-
-    # Imprimer le texte après suppression des balises HTML
-    #print("Texte sans HTML :", texte_sans_html)
-
     # Supprimer les caractères spéciaux et les chiffres
     texte_sans_html = re.sub(r'[^a-zA-Z\s]', '', texte)
     texte_propre = texte_sans_html.lower()
     texte_propre = texte_propre.replace('\n', ' ')
-
-    # Imprimer le texte après suppression des caractères spéciaux et chiffres
-    #print("Texte après suppression des caractères spéciaux :", texte_sans_html)
-    '''
-    # Diviser le texte en mots en utilisant plusieurs délimitations
-    mots = re.split(r'\s+|[.,;\'"()]+', texte_propre)
-    # Imprimer le texte après suppression des caractères spéciaux et chiffres
-    #print("Texte après suppression des caractères spéciaux :", texte_sans_html)
-
-    # Diviser le texte en mots en utilisant plusieurs délimitations
-    mots = re.split(r'\s+|[.,;\'"()]+', texte_sans_html)
-
-    # Imprimer les mots après la division du texte
-    #print("Mots après division du texte :", mots)
-
-    # Filtrer les mots vides
-    mots_filtrés = [mot for mot in mots if mot]
-
-    # Imprimer les mots filtrés
-    #print("Mots filtrés :", mots_filtrés)
-
-    # Ajouter les mots à l'ensemble
-    vocabulaire_set = set(mots_filtrés)
-
-    # Construire un dictionnaire de vocabulaire avec des fréquences initiales à zéro
-    vocabulaire = {mot: 0 for mot in vocabulaire_set}
-
-    for mot in mots_filtrés:
-        vocabulaire[mot] += 1'''
     return texte_propre
 
 # =============== TRIER LES RESULTATS PAR PERTINENCE ===============
@@ -228,9 +193,29 @@ def comparer_nombres_mots_longueur(texte):
     longueur_texte = len(texte)
     return nombre_mots, longueur_texte
 
+# =============== TRIER LES RESULTATS PAR SIMILARITE ===============
+def trier_resultats_par_similarite(matrice_tfidf, termes_recherche, vectoriseur, collection_documents):
+    # Vectoriser les termes de recherche
+    vecteur_termes_recherche = vectoriseur.transform([" ".join(termes_recherche)])
+
+    print("Dimensions de matrice_tfidf :", matrice_tfidf.shape)
+    print("Dimensions de vecteur_termes_recherche :", vecteur_termes_recherche.shape)
+
+    # Calculer la similarité cosinus entre le vecteur des termes de recherche et chaque document
+    similarites = cosine_similarity(matrice_tfidf, vecteur_termes_recherche)
+
+    # Ajouter la similarité comme colonne dans les résultats
+    resultats_tries = list(zip(collection_documents, similarites))
+
+    # Trier les résultats par similarité (du plus au moins similaire)
+    resultats_tries = sorted(resultats_tries, key=lambda x: x[1], reverse=True)
+
+    # Afficher les résultats triés
+    for document, similarite in resultats_tries:
+        print(f"Similarite : {similarite[0]:.4f}")
+        print(document)
+
 # =============== APPELS DES FONCTIONS ===============
-# URL de la page web
-#url_test = 'https://www.paris2024.org/fr/'
 
 # Récupérer le contenu web
 contenu_web_arxiv, contenu_web_reddit = recuperer_contenu_web()
@@ -254,7 +239,6 @@ texte_pertinent = extraire_texte_pertinent(contenu_propre, termes_recherche)
 
 # Traiter le texte pertinent extrait
 longue_chaine_de_caracteres = traiter_texte_pertinent(texte_pertinent)
-#longue_chaine_de_caracteres=["Ceci est le premier document.", "Ceci est le deuxième document.", "Et voici le troisième document."]
 
 # Creer un document
 collection_documents = []
@@ -289,3 +273,8 @@ resultat_nettoye_str = ' '.join(contenu_web_arxiv)
 nombre_mots, longueur_texte = comparer_nombres_mots_longueur(resultat_nettoye_str)
 print(f"Nombre de mots : {nombre_mots}")
 print(f"Longueur du texte : {longueur_texte} caracteres")
+
+# Comparer en fonction des similarités
+vectoriseur = TfidfVectorizer(min_df=1) 
+matrice_tfidf = vectoriseur.fit_transform(texte_pertinent)
+trier_resultats_par_similarite(matrice_tfidf, termes_recherche, vectoriseur, collection_documents)

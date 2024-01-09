@@ -139,7 +139,27 @@ class TestFunctions(unittest.TestCase):
         # Vérifier si les résultats correspondent aux calculs manuels
         self.assertEqual(resultat_non_vide, (mots_manuels, longueur_manuelle),
                          "Les résultats ne correspondent pas aux calculs manuels.")
-    
+
+    '''La fonction test ne marche pas''' 
+    # Test de la fonction test_trier_resultats_par_similarite
+    def test_trier_resultats_par_similarite(self):
+        # Créer des données de test
+        vectoriseur = TfidfVectorizer(min_df=1)
+        matrice_tfidf = vectoriseur.fit_transform(["Document1", "Document2", "Document3"])
+        termes_recherche = ["olympic", "texte", "valeur"]
+        collection_documents = ["Document 1", "Document 2", "Document 3"]
+
+        # Appeler la fonction avec les mêmes paramètres
+        resultats_tries = trier_resultats_par_similarite(matrice_tfidf, termes_recherche, vectoriseur, collection_documents)
+
+        # Vérifier les résultats
+        self.assertEqual(len(resultats_tries), len(collection_documents))
+
+        # Afficher les résultats triés
+        for document, similarite in resultats_tries:
+            print(f"Similarite : {similarite[0]:.4f}")
+            print(document)
+
 
 if __name__ == '__main__':
     unittest.main()
