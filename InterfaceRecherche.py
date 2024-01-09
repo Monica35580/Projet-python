@@ -1,7 +1,41 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
+import test1 as t
+from sklearn.metrics.pairwise import cosine_similarity
 
+
+# Fonction de recherche
 def recherche():
+    # Obtenir la requête de l'utilisateur
+    requete_utilisateur = champ_recherche.get()
+
+    # Prétraitement de la requête
+    requete_traitee = t.nettoyer_texte(requete_utilisateur)
+
+    # Concaténer tous les textes du DataFrame (Reddit + ArXiv)
+    textes_concatenes = [requete_traitee] + t.df['Contenu'].tolist()
+
+    # Utiliser TF-IDF pour la représentation vectorielle
+    matrice_tfidf_resultat = t.obtenir_matrice_tfidf(textes_concatenes)
+
+    # Calcul de la similarité avec chaque texte du corpus
+    similarites = cosine_similarity(matrice_tfidf_resultat)[0, 1:]
+
+    # Trier les résultats par similarité
+    resultats_tries = sorted(zip(t.df['Contenu'], similarites), key=lambda x: x[1], reverse=True)
+
+    # Afficher les résultats triés
+    resultat_texte.config(state=tk.NORMAL)
+    resultat_texte.delete(1.0, tk.END)
+    resultat_texte.insert(tk.END, "Résultats de la recherche :\n")
+    for i, (resultat) in enumerate(resultats_tries):
+        resultat_texte.insert(tk.END, f"{i + 1}.\n")
+        resultat_texte.insert(tk.END, f"{resultat}\n\n")
+    resultat_texte.config(state=tk.DISABLED)
+
+
+'''def recherche():
+
     # Fonction de recherche à implémenter
     # Ici, nous affichons simplement un exemple de texte dans la zone de résultats
     resultat_texte.config(state=tk.NORMAL)
@@ -14,7 +48,7 @@ def recherche():
 
     # Afficher le menu déroulant de tri
     menu_tri_results.grid(row=3, column=0, columnspan=2, pady=(10, 0))
-
+'''
 def trier_resultats(critere):
     # Fonction de tri des résultats à implémenter
     # Ici, nous affichons simplement un exemple de texte trié dans la zone de résultats
@@ -51,7 +85,7 @@ bouton_recherche = ttk.Button(fenetre, text="Rechercher", command=recherche)
 bouton_recherche.grid(row=0, column=1, padx=10, pady=10)
 
 # Texte informatif
-info_texte = ttk.Label(fenetre, text="Entrez votre requête de recherche ci-dessus:")
+info_texte = ttk.Label(fenetre, text="Entrez votre requête de recherche ci-dessus : \n /!\ La requête doit être en anglais")
 info_texte.grid(row=1, column=0, columnspan=2, pady=(0, 10))
 
 # Résultats de la recherche (zone de texte déroulante)
