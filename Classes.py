@@ -30,3 +30,4 @@ class Author:
         self.production.append(production)
     def __str__(self):
         return f"Auteur : {self.name}\t# productions : {self.ndoc}"
+        
