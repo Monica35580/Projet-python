@@ -54,8 +54,9 @@ class Corpus:
 
     def search(self, mot_cle):
         p = re.compile(mot_cle, re.IGNORECASE)
-        from TPs import longueChaineDeCaracteres
-        ch= longueChaineDeCaracteres
+        #from TPs import longueChaineDeCaracteres
+        #ch= longueChaineDeCaracteres
+        ch=""
         res= p.finditer(ch)
         for r in res:
             (i,j) = r.span()
@@ -63,8 +64,9 @@ class Corpus:
 
     def concorde(self, contexte,expression):
         p = re.compile("(.{0,"+str(contexte)+"})"+expression+"(.{0,"+str(contexte)+"})", re.IGNORECASE)
-        from TPs import longueChaineDeCaracteres
-        ch = longueChaineDeCaracteres
+        #from TPs import longueChaineDeCaracteres
+        #ch = longueChaineDeCaracteres
+        ch=""
         matches = p.finditer(ch)
         
         results = []
