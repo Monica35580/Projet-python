@@ -17,7 +17,7 @@ import fonctions as f
 ########### Pour Récupérer Reddit
 def obtenir_contenu_web():
     # Identification
-    reddit = praw.Reddit(client_id='hOyL_L3Pir_9uU18wGBJkQ', client_secret='wBb7Zld_tKlDb9MDHyApFWZHK74VpA', user_agent='lucilecpp')
+    reddit = praw.Reddit(client_id='ZVkm6bM3v61Exp5aBLZHEw', client_secret='jURx7ydmokcIm353Fl-D5-5A5Xbd4g', user_agent='lucilepbt')
 
     # Requête
     limit = 100
@@ -27,6 +27,7 @@ def obtenir_contenu_web():
     docs = []
     auteurs = []
     dates = []
+    titres = []
 
     # Affichage de la récupération en temps réel
     for i, post in enumerate(hot_posts):
@@ -53,15 +54,18 @@ def obtenir_contenu_web():
             # Ajout de la date formaté à la liste
             dates.append(date_format)
 
+            # Ajout du titre de l'article
+            titres.append(post.title)
+
     # Affichage du nombre d'article récupérés
     print(f"Nombre d'articles récupérés: {len(docs)}")
-    return docs, auteurs, dates
+    return docs, auteurs, dates, titres
 
 ################### Pour Arxiv
 def recuperer_contenu_web():
     # Paramètres
     query_terms = ["olympic", "game"]
-    max_results = 100
+    max_results = 200
 
     # Requête ArXiv
     url = f'http://export.arxiv.org/api/query?search_query=all:{"+".join(query_terms)}&start=0&max_results={max_results}'
@@ -74,6 +78,7 @@ def recuperer_contenu_web():
     docs = []
     auteurs = []
     dates = []
+    titres=[]
 
     # Ajout résumés, auteurs et dates à la liste
     for i, entry in enumerate(data["feed"]["entry"]):
@@ -121,10 +126,14 @@ def recuperer_contenu_web():
         else:
             # On ajoute une date inconnue si pas de published pur le texte
             dates.append("Date inconnue")
+        
+        # Extraction des titres
+        title = entry["title"]
+        titres.append(title)
 
     # Affichage du nombre de document
     print(f"Nombre d'articles récupérés: {len(docs)}")
-    return docs, auteurs, dates
+    return docs, auteurs, dates, titres
 # ==================================================================Fonction pour le traitement du corpus=========================
 
 # Pour avoir la date au bon format
@@ -194,10 +203,11 @@ def creer_document():
     liste_documents = []
 
     # Itéreration  sur les lignes du df
-    for index, ligne in df.iterrows():
+    for index, ligne in df_final.iterrows():
 
         # Créer une instance de la classe Document pour chaque document du df
         document = Document(  
+            titre=ligne['Titre'],
             auteur=ligne['Auteur'],
             date=ligne['Date'],
             texte=ligne['Contenu'],
@@ -283,10 +293,10 @@ def compter_caracteres(texte):
 #url_test = 'https://www.paris2024.org/fr/'
 
 #récupérer le contenu web de Arxiv
-contenu_web_arxiv, auteurs_ar, dates_ar = recuperer_contenu_web()
+contenu_web_arxiv, auteurs_ar, dates_ar, titre_ar = recuperer_contenu_web()
 
 # Récupération de la fonction pour obtenir les articles de Reddit
-contenu_web_reddit, auteurs_red, dates_red = obtenir_contenu_web()
+contenu_web_reddit, auteurs_red, dates_red, titre_red = obtenir_contenu_web()
 
 # Concaténer les éléments de la liste
 #contenu_web_arxiv_str = ' '.join(contenu_web_arxiv)
@@ -298,7 +308,7 @@ contenu_web_reddit, auteurs_red, dates_red = obtenir_contenu_web()
 #print(contenu_web_arxiv)
 
 # ========================================================== Obtenir Dataframe ======================================
-def creation_df(contenu, auteurs, dates, nom_var):
+def creation_df(contenu, auteurs, dates, titres, nom_var):
     contenu_propre=[]
     # Nettoyer le texte
     for i in contenu:
@@ -309,7 +319,7 @@ def creation_df(contenu, auteurs, dates, nom_var):
         contenu_propre.append(resultat_nettoye)
 
     # Création d'un DataFrame à partir des données récupérées
-    df = pd.DataFrame({'Contenu': contenu, 'Auteur': auteurs, 'Date': dates})
+    df = pd.DataFrame({'Contenu': contenu, 'Auteur': auteurs, 'Date': dates, 'Titre': titres})
 
     # Ajout d'une variable pour connaître l'origine du texte
     df['Origine'] = nom_var
@@ -319,29 +329,29 @@ def creation_df(contenu, auteurs, dates, nom_var):
 ########################################################### Creation du corpus #########################################################
 
 # Création du corpus pour Arxiv
-arxiv=creation_df(contenu_web_arxiv, auteurs_ar, dates_ar, 'Arxiv')
+arxiv=creation_df(contenu_web_arxiv, auteurs_ar, dates_ar, titre_ar,'Arxiv')
 
 # Création du corpus pour Reddit
-reddit=creation_df(contenu_web_reddit, auteurs_red, dates_red, 'Reddit')
+reddit=creation_df(contenu_web_reddit, auteurs_red, dates_red, titre_red,'Reddit')
 
 # Combiner les deux dataframes
-df = pd.concat([arxiv, reddit], ignore_index=True)
+df_final = pd.concat([arxiv, reddit], ignore_index=True)
 
 # Ajout ID unique par texte
-df.insert(loc=0, column="id", value=df.index)
+df_final.insert(loc=0, column="id", value=df_final.index)
 
 # Calcul de différents indicateurs pour les textes
-df['Nombre_phrases'] = df['Contenu'].apply(compter_phrases)
-df['Nombre_mots'] = df['Contenu'].apply(compter_mots)
-df['Nombre_caracteres'] = df['Contenu'].apply(compter_caracteres)
-df['Comparer_mot']=df['Contenu'].apply(comparer_nombres_mots_longueur)
-df['Matrice tf-idf']=df['Contenu'].apply(f.obtenir_matrice_tfidf)
+df_final['Nombre_phrases'] = df_final['Contenu'].apply(compter_phrases)
+df_final['Nombre_mots'] = df_final['Contenu'].apply(compter_mots)
+df_final['Nombre_caracteres'] = df_final['Contenu'].apply(compter_caracteres)
+df_final['Comparer_mot']=df_final['Contenu'].apply(comparer_nombres_mots_longueur)
+df_final['Matrice tf-idf']=df_final['Contenu'].apply(f.obtenir_matrice_tfidf)
 
-print(df)
+print(df_final['Titre'])
 
 ## Calcul matrice tf-idf
 # Extraction de la colonne avec les textes
-textes_colonne = df['Contenu']
+textes_colonne = df_final['Contenu']
 
 # Application de la fonction
 matrice_tfidf_resultat = f.obtenir_matrice_tfidf(textes_colonne)
@@ -350,13 +360,13 @@ matrice_tfidf_resultat = f.obtenir_matrice_tfidf(textes_colonne)
 print(matrice_tfidf_resultat)
 
 # Convertir le df en csv
-df.to_csv('corpus.csv', index=False, sep=';')
+df_final.to_csv('Projet-python/corpus.csv', index=False, sep=';')
 
 # Inititalisation des documents du corpus
 corpus_liste=creer_document()
 
 # Affichage des documents de la classe
 #for document in corpus_liste:
-#    print(Document.__repr__(document))
+ #   print(Document.__repr__(document))
 
 
