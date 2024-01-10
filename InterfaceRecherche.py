@@ -18,7 +18,7 @@ def recherche():
         # Nettoyage
         requete_traitee = t.nettoyer_texte(requete_utilisateur)
 
-        # Concatenation tous les textes du df et on transforme le contenu en liste pour passer dans matrice tdidf
+        # Concatenation tous les textes du df et on transforme le contenu en liste pour passer dans matrice tdidf (De la ligne 21 à 31 le code provient de chatGPT)
         textes_concatenes = [requete_traitee] + t.df['Contenu'].tolist()
 
         # Utilisation TF-IDF pour la représentation vectorielle
