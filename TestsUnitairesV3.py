@@ -153,31 +153,29 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(compter_caracteres(texte_2), 39)
         self.assertEqual(compter_caracteres(texte_3), 50)  
 
-
     # Test de la fonction  creation_df
     def test_creation_df(self):
-        contenu = ["Texte 1.", "Texte 2.", "Texte 3."]
-        auteurs = ["Auteur 1", "Auteur 2", "Auteur 3"]
-        dates = ["2022-01-01", "2022-01-02", "2022-01-03"]
-        nom_var = "Origine_1"
+        # Données de test
+        contenu = ["premier texte", "autre exemple de texte."]
+        auteurs = ["Auteur1", "Auteur2"]
+        dates = ["2022-01-01", "2022-01-02"]
+        titres = ["Titre1", "Titre2"]
+        nom_var = "OrigineTest"
 
-        df = creation_df(contenu, auteurs, dates, nom_var)
+        # Appeler la fonction à tester
+        result_df = creation_df(contenu, auteurs, dates, titres, nom_var)
 
-        # Vérifier si le DataFrame est créé correctement
-        self.assertIsInstance(df, pd.DataFrame)
+        # Vérifier si le DataFrame a été créé correctement
+        self.assertIsInstance(result_df, pd.DataFrame)
+        self.assertEqual(len(result_df), len(contenu))
+        self.assertListEqual(result_df['Auteur'].tolist(), auteurs)
+        self.assertListEqual(result_df['Date'].tolist(), dates)
+        self.assertListEqual(result_df['Titre'].tolist(), titres)
+        self.assertListEqual(result_df['Origine'].tolist(), [nom_var] * len(contenu))
 
-        # Vérifier si les colonnes sont présentes dans le DataFrame
-        self.assertTrue('Contenu' in df.columns)
-        self.assertTrue('Auteur' in df.columns)
-        self.assertTrue('Date' in df.columns)
-        self.assertTrue('Origine' in df.columns)
-
-        # Vérifier si les données sont correctement insérées
-        self.assertEqual(df.shape[0], len(contenu))
-        self.assertEqual(df['Auteur'].tolist(), auteurs)
-        self.assertEqual(df['Date'].tolist(), dates)
-        self.assertEqual(df['Origine'].unique(), [nom_var])
-
+        # Vérifier si le contenu a été correctement nettoyé
+        for i, cleaned_text in enumerate(result_df['Contenu']):
+            self.assertEqual(cleaned_text, nettoyer_texte(contenu[i]))
 
 if __name__ == '__main__':
     unittest.main()

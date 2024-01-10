@@ -4,6 +4,7 @@ import requests
 import pickle
 import praw
 import datetime
+import os
 import pandas as pd
 import sys
 import urllib, urllib.request
@@ -31,6 +32,7 @@ def obtenir_contenu_web():
     docs = []
     auteurs = []
     dates = []
+    titres = []
 
     # Affichage de la récupération en temps réel
     for i, post in enumerate(hot_posts):
@@ -55,9 +57,12 @@ def obtenir_contenu_web():
             # Ajout de la date formaté à la liste
             dates.append(date_format)
 
+            # Ajout du titre de l'article
+            titres.append(post.title)
+
     # Affichage du nombre d'article récupérés
     print(f"Nombre d'articles récupérés: {len(docs)}")
-    return docs, auteurs, dates
+    return docs, auteurs, dates, titres
 
 # =============== RECUPERER CONTENU ARXIV ===============
 def recuperer_contenu_web():
@@ -75,6 +80,7 @@ def recuperer_contenu_web():
     docs = []
     auteurs = []
     dates = []
+    titres = []
 
     # Ajout résumés, auteurs et dates à la liste
     for i, entry in enumerate(data["feed"]["entry"]):
@@ -114,10 +120,14 @@ def recuperer_contenu_web():
         else:
             # On ajoute une date inconnue si pas de published pur le texte
             dates.append("Date inconnue")
+        
+        # Extraction des titres
+        title = entry["title"]
+        titres.append(title)
 
     # Affichage du nombre de document
     print(f"Nombre d'articles récupérés: {len(docs)}")
-    return docs, auteurs, dates
+    return docs, auteurs, dates, titres
     
 # =============== TRAITEMENT DU CORPUS ===============
 def nettoyer_texte(texte):
@@ -252,7 +262,7 @@ def comparer_nombres_mots_longueur(texte):
     longueur_texte = len(texte)
     return nombre_mots, longueur_texte
 
-# =============== CALCUL NOMBRE DE MOT PAR PHRASE ===============
+# =============== CALCUL NOMBRE DE PHRASES ===============
 def compter_phrases(texte):
     # Séparation des phrases avec la ponctuation
     phrases = re.split(r'[.!?]', texte)
@@ -261,7 +271,7 @@ def compter_phrases(texte):
     # Retour de la longueur de la phrase
     return len(phrases) 
 
-# =============== CALCUL NOMBRE DE MOT PAR TEXTE ===============
+# =============== CALCUL NOMBRE DE MOTS PAR TEXTE ===============
 def compter_mots(texte):
     # Sépraration des mots à chaque espace
     mots = texte.split()
@@ -272,7 +282,7 @@ def compter_caracteres(texte):
     return len(texte)
 
 # =============== OBTENIR DATAFRAME ===============
-def creation_df(contenu, auteurs, dates, nom_var):
+def creation_df(contenu, auteurs, dates, titres, nom_var):
     contenu_propre=[]
 
     # Nettoyer le texte
@@ -283,23 +293,23 @@ def creation_df(contenu, auteurs, dates, nom_var):
         contenu_propre.append(resultat_nettoye)
 
     # Création d'un DataFrame à partir des données récupérées
-    df = pd.DataFrame({'Contenu': contenu, 'Auteur': auteurs, 'Date': dates})
+    df = pd.DataFrame({'Contenu': contenu, 'Auteur': auteurs, 'Date': dates, 'Titre': titres})
     # Ajout d'une variable pour connaître l'origine du texte
     df['Origine'] = nom_var
     return df
 
 # =============== APPELS DES FONCTIONS ===============
 # Récupérer le contenu web de Arxiv
-contenu_web_arxiv, auteurs_ar, dates_ar = recuperer_contenu_web()
+contenu_web_arxiv, auteurs_ar, dates_ar, titres_ar = recuperer_contenu_web()
 
 # Récupération de la fonction pour obtenir les articles de Reddit
-contenu_web_reddit, auteurs_red, dates_red = obtenir_contenu_web()
+contenu_web_reddit, auteurs_red, dates_red, titres_red = obtenir_contenu_web()
 
 # Création du corpus pour Arxiv
-arxiv=creation_df(contenu_web_arxiv, auteurs_ar, dates_ar, 'Arxiv')
+arxiv=creation_df(contenu_web_arxiv, auteurs_ar, dates_ar, titres_ar, 'Arxiv')
 
 # Création du corpus pour Reddit
-reddit=creation_df(contenu_web_reddit, auteurs_red, dates_red, 'Reddit')
+reddit=creation_df(contenu_web_reddit, auteurs_red, dates_red, titres_red, 'Reddit')
 
 # Combiner les deux dataframes
 df = pd.concat([arxiv, reddit], ignore_index=True)
@@ -313,7 +323,7 @@ df['Nombre_mots'] = df['Contenu'].apply(compter_mots)
 df['Nombre_caracteres'] = df['Contenu'].apply(compter_caracteres)
 df['Comparer_mot']=df['Contenu'].apply(comparer_nombres_mots_longueur)
 df['Matrice tf-idf']=df['Contenu'].apply(obtenir_matrice_tfidf)
-print(df)
+print(df['Titre'])
 
 # Extraction de la colonne avec les textes
 textes_colonne = df['Contenu']
@@ -326,11 +336,23 @@ print(matrice_tfidf_resultat)
 
 # Convertir le df en csv
 df.to_csv('corpus.csv', index=False, sep=';')
+print(f'Le fichier corpus.csv a été crée ici : {os.getcwd()}')
 
 # Inititalisation des documents du corpus
 corpus_liste=creer_document()
 
 # Pour obtenir le corpus en df sans interroger l'API
 chemin_fichier_csv = 'corpus.csv' # A changer si ça fonctionne pas  |   le mieux est de tout mettre dans un seul et même dossier
-df = pd.read_csv(chemin_fichier_csv, delimiter=';')
-print(df)
+# Vérification que le csv existe bien 
+if os.path.exists(chemin_fichier_csv):
+
+# Pour obtenir le corpus en df sans interroger l'API
+    df = pd.read_csv(chemin_fichier_csv, delimiter=';')
+else : 
+    chemin_fichier_csv='Projet-python-master/corpus.csv' #  A changer si ça fonctionne pas
+    if os.path.exists(chemin_fichier_csv):
+
+        # Pour obtenir le corpus en df sans interroger l'API
+        df = pd.read_csv(chemin_fichier_csv, delimiter=';')
+    else : 
+        print ("Le fichier .csv n'a pas été trouvé et sera crée ici : ", {os.getcwd()})
