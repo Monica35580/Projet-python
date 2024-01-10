@@ -1,10 +1,10 @@
+import ctypes
+import CodeV3 as t
+import os
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from sklearn.metrics.pairwise import cosine_similarity
-import ctypes
-import fonctions as t
 
-## Il faut lancer le fichier fonctions.py avant de lancer l'interface, sinon le df ne sera pas crée
 
 # Fonction de recherche
 def recherche():
@@ -27,7 +27,7 @@ def recherche():
         # Calcul de la similarité pour les articles
         similarites = cosine_similarity(matrice_tfidf_resultat)[0, 1:]
 
-        #Trie des résultats par similarité
+         #Trie des résultats par similarité
         resultats_tries = sorted(zip(t.df['Contenu'], t.df['Auteur'],t.df['Date'], t.df['Origine'], t.df['Titre'],similarites), key=lambda x: x[5], reverse=True)
         
         # Récupération du nombre de résultats entre par l'utilisateur
