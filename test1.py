@@ -12,6 +12,7 @@ from datetime import datetime
 import sys
 sys.stdout.reconfigure(encoding='utf-8') # Pour configurer la sortie des articles en UTF-8 Sinon une erreurs dans le terminal car il ne peut pas décoder
 import fonctions as f
+import os
 
 # =============== RECUPERER CONTENU ET TRAITEMENT DU DOCUMENT ===============
 ########### Pour Récupérer Reddit
@@ -360,7 +361,8 @@ matrice_tfidf_resultat = f.obtenir_matrice_tfidf(textes_colonne)
 print(matrice_tfidf_resultat)
 
 # Convertir le df en csv
-df_final.to_csv('Projet-python/corpus.csv', index=False, sep=';')
+df_final.to_csv('corpus.csv', index=False, sep=';')
+print(f'Le fichier corpus.csv a été crée ici : {os.getcwd()}')
 
 # Inititalisation des documents du corpus
 corpus_liste=creer_document()
