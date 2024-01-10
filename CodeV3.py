@@ -356,3 +356,4 @@ else :
         df = pd.read_csv(chemin_fichier_csv, delimiter=';')
     else : 
         print ("Le fichier .csv n'a pas été trouvé et sera crée ici : ", {os.getcwd()})
+        
